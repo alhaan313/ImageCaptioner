@@ -1,0 +1,14 @@
+# System files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+
+# Python bytecode
+*.pyc
+__pycache__/
+
+# Other
+uploads
+test_.py
