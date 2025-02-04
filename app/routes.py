@@ -27,7 +27,7 @@ def generate_caption():
 
     if file:
         filename = secure_filename(file.filename)
-        file_path = os.path.join('uploads', filename)
+        file_path = os.path.join(upload_folder, filename)
         file.save(file_path)
 
         caption = call_blip_api(file_path)
