@@ -21,7 +21,7 @@ def generate_caption():
         return jsonify({'error' : 'No selected file'}), 400
 
     # Ensure 'uploads' directory exists
-    upload_folder = 'uploads'
+    upload_folder = '/tmp/uploads'
     if not os.path.exists(upload_folder):
         os.makedirs(upload_folder)
 
