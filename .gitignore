@@ -5,6 +5,9 @@ Thumbs.db
 # Environment files
 .env
 
+# Virtual env
+venv
+
 # Python bytecode
 *.pyc
 __pycache__/
