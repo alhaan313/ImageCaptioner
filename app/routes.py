@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, jsonify
 import requests
 import os
 from werkzeug.utils import secure_filename
-from config import token_key
+from .config import token_key
 
 main = Blueprint('main', __name__)
 
@@ -19,7 +19,12 @@ def generate_caption():
 
     if file.filename == '':
         return jsonify({'error' : 'No selected file'}), 400
-    
+
+    # Ensure 'uploads' directory exists
+    upload_folder = 'uploads'
+    if not os.path.exists(upload_folder):
+        os.makedirs(upload_folder)
+
     if file:
         filename = secure_filename(file.filename)
         file_path = os.path.join('uploads', filename)
