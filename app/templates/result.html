@@ -4,54 +4,56 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Caption Result</title>
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-    integrity="sha384-KyZXEAg3QhqLMpG8r+Knujsl5/6E6NNbB8Q4Wx5r+5/3ROKFnxB5TOfl6EMdV0bN"
-    crossorigin="anonymous"
-  />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body {
-      background-color: #f8f9fa;
+      background: linear-gradient(135deg, #ff7f50, #ff4500);
+      color: #fff;
+      font-family: 'Arial', sans-serif;
+      padding: 50px 20px;
     }
     .result-container {
-      margin: 50px auto;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 15px;
       max-width: 600px;
-      background: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin: 0 auto;
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+      text-align: center;
     }
     .image-preview {
       max-width: 100%;
       height: auto;
       border-radius: 10px;
       margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     .caption-box {
-      font-size: 1.25rem;
-      font-weight: 500;
-      color: #333;
+      font-size: 1.5rem;
+      font-weight: bold;
+      margin-top: 20px;
     }
     .btn {
       margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #6a11cb;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+    }
+    .btn:hover {
+      background-color: #2575fc;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="result-container text-center">
-      <h2>Generated Caption</h2>
-      <hr />
-      <img
-        src="{{ image_url }}"
-        alt="Uploaded Image"
-        class="image-preview"
-      />
-      <p class="caption-box">{{ caption }}</p>
-      <a href="{{ url_for('main.index') }}" class="btn btn-primary">Try Another Image</a>
-    </div>
+  <div class="result-container">
+    <h2>Generated Caption</h2>
+    <img src="{{ image_url }}" alt="Uploaded Image" class="image-preview">
+    <p class="caption-box">{{ caption }}</p>
+    <a href="{{ url_for('main.index') }}" class="btn">Try Another Image</a>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
