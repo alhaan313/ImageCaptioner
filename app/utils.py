@@ -4,7 +4,7 @@ import os
 from werkzeug.utils import secure_filename
 from cerebras.cloud.sdk import Cerebras
 from datetime import datetime, timedelta
-from .models import db, Usage
+from .models import metrics
 
 UPLOAD_FOLDER = '/tmp/uploads'
 
@@ -84,22 +84,8 @@ def generate_cerebras_captions(image_path, emotion, base_caption):
 
 def track_usage(request, image_processed=False):
     """Track usage metrics"""
-    usage = Usage(
-        endpoint=request.endpoint,
-        ip_address=request.remote_addr,
-        user_agent=request.user_agent.string,
-        image_processed=image_processed
-    )
-    db.session.add(usage)
-    db.session.commit()
+    metrics.track_visit(request.remote_addr, request.endpoint, image_processed)
 
 def get_metrics():
     """Get usage metrics for display"""
-    now = datetime.utcnow()
-    last_24h = now - timedelta(days=1)
-    
-    return {
-        'total_images': Usage.query.filter_by(image_processed=True).count(),
-        'total_users': Usage.query.distinct(Usage.ip_address).count(),
-        'last_24h': Usage.query.filter(Usage.timestamp >= last_24h).count()
-    }
+    return metrics.get_metrics()
