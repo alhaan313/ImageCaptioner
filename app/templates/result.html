@@ -3,54 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Caption Result</title>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-TQ9XJ9BG');</script>
+    <!-- End Google Tag Manager -->
+    <title>Generated Caption - AI Caption Studio</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
 </head>
 <body>
-    <div class="page-wrapper">
-        <div class="result-container">
-            <div class="result-header">
-                <h2><i class="fas fa-magic"></i> AI Generated Caption</h2>
-            </div>
-            <div class="image-preview-container">
-                <img src="{{ image_url }}" alt="Uploaded Image" class="image-preview">
-                <div class="caption-box">
-                    <i class="fas fa-quote-left"></i>
-                    <p>{{ caption }}</p>
-                    <i class="fas fa-quote-right"></i>
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TQ9XJ9BG"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+    <nav class="navbar">
+        <div class="container">
+            <span class="navbar-brand">AI Caption Studio</span>
+            <a href="{{ url_for('main.index') }}" class="nav-link">
+                <i class="fas fa-home"></i> Home
+            </a>
+        </div>
+    </nav>
+
+    <main class="container py-5">
+        <div class="result-panel glass-panel">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="image-showcase">
+                        <img src="{{ image_url }}" alt="Uploaded Image" class="showcase-image">
+                        <div class="image-info">
+                            <span class="tone-badge">{{ tone }}</span>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="action-buttons">
-                <div class="share-buttons">
-                    <button class="share-btn twitter">
-                        <i class="fab fa-twitter"></i>
-                    </button>
-                    <button class="share-btn facebook">
-                        <i class="fab fa-facebook-f"></i>
-                    </button>
-                    <button class="share-btn linkedin">
-                        <i class="fab fa-linkedin-in"></i>
-                    </button>
+                <div class="col-lg-6">
+                    <div class="caption-showcase">
+                        <h2>Generated Captions</h2>
+                        <div class="main-caption">
+                            <i class="fas fa-star"></i>
+                            <p>{{ base_caption }}</p>
+                        </div>
+                        
+                        {% if error_message %}
+                        <div class="error-notice">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <p>{{ error_message }}</p>
+                        </div>
+                        {% else %}
+                        <div class="alternative-captions">
+                            <h3>Alternative Versions</h3>
+                            {% for caption in captions %}
+                            <div class="caption-item">
+                                <p>{{ caption }}</p>
+                                <button class="copy-btn" data-caption="{{ caption }}">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="action-panel">
+                            <div class="share-options">
+                                <button class="share-btn twitter">
+                                    <i class="fab fa-twitter"></i>
+                                    Twitter
+                                </button>
+                                <button class="share-btn linkedin">
+                                    <i class="fab fa-linkedin-in"></i>
+                                    LinkedIn
+                                </button>
+                            </div>
+                            <a href="{{ url_for('main.index') }}" class="try-again-btn">
+                                <i class="fas fa-redo"></i>
+                                Try Another Image
+                            </a>
+                        </div>
+                    </div>
                 </div>
-                <a href="{{ url_for('main.index') }}" class="try-again-btn">
-                    <i class="fas fa-redo"></i> Try Another Image
-                </a>
             </div>
         </div>
-    </div>
+    </main>
 
     <script>
+        // Copy caption functionality
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const caption = this.dataset.caption;
+                navigator.clipboard.writeText(caption);
+                
+                // Show feedback
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-check"></i>';
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                }, 2000);
+            });
+        });
+
+        // Share functionality
         document.querySelectorAll('.share-btn').forEach(btn => {
             btn.addEventListener('click', function() {
-                const caption = document.querySelector('.caption-box p').textContent;
+                const caption = document.querySelector('.main-caption p').textContent;
                 const text = encodeURIComponent(`Check out this AI-generated caption: ${caption}`);
                 const platform = this.classList[1];
                 
                 const urls = {
                     twitter: `https://twitter.com/intent/tweet?text=${text}`,
-                    facebook: `https://www.facebook.com/sharer/sharer.php?u=${window.location.href}`,
                     linkedin: `https://www.linkedin.com/shareArticle?mini=true&url=${window.location.href}&title=AI%20Generated%20Caption&summary=${text}`
                 };
 

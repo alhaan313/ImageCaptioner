@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, jsonify, url_for, redirec
 import requests
 import os
 from werkzeug.utils import secure_filename
-from .utils import call_blip_api, process_image
+from .utils import call_blip_api, process_image, generate_cerebras_captions, track_usage, get_metrics
 
 main = Blueprint('main', __name__)
 
@@ -15,7 +15,9 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 @main.route('/', methods=['GET'])
 def index():
-    return render_template('index.html')
+    track_usage(request)
+    metrics = get_metrics()
+    return render_template('index.html', metrics=metrics)
 
 
 # Serve uploaded files
@@ -28,16 +30,29 @@ def uploaded_file(filename):
 @main.route('/generate-caption', methods=['POST'])
 def generate_caption():
     try:
+        track_usage(request, image_processed=True)
         if 'image' not in request.files:
             flash('No image file found', 'error')
             return redirect(url_for('main.index'))
 
         file = request.files['image']
+        tone = request.form.get('tone', 'professional')
         file_path, filename = process_image(file)
-        caption = call_blip_api(file_path)
+        
+        # Get base caption from BLIP
+        base_caption = call_blip_api(file_path)
+        
+        # Generate additional captions using Cerebras
+        captions, error_message = generate_cerebras_captions(file_path, tone, base_caption)
+        
         image_url = url_for('main.uploaded_file', filename=filename)
 
-        return render_template('result.html', caption=caption, image_url=image_url)
+        return render_template('result.html', 
+                             base_caption=base_caption,
+                             captions=captions,
+                             error_message=error_message,
+                             image_url=image_url,
+                             tone=tone)
     
     except ValueError as e:
         flash(str(e), 'error')
