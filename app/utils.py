@@ -3,8 +3,6 @@ from .config import token_key, cerebras_api_key
 import os
 from werkzeug.utils import secure_filename
 from cerebras.cloud.sdk import Cerebras
-from datetime import datetime, timedelta
-from .models import metrics
 
 UPLOAD_FOLDER = '/tmp/uploads'
 
@@ -81,11 +79,3 @@ def generate_cerebras_captions(image_path, emotion, base_caption):
     except Exception as e:
         error_message = "Our AI enhancement service is temporarily unavailable. We've provided a base caption for your image."
         return [], error_message
-
-def track_usage(request, image_processed=False):
-    """Track usage metrics"""
-    metrics.track_visit(request.remote_addr, request.endpoint, image_processed)
-
-def get_metrics():
-    """Get usage metrics for display"""
-    return metrics.get_metrics()
