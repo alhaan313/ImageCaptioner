@@ -44,6 +44,7 @@ def call_phosus_api(image_path):
         
         payload = {"image_b64": base64_img_str}
         
+        print("Calling Phosus API...")
         response = requests.post(
             "https://api.phosus.com/icaption/v1",
             headers=headers,
@@ -53,7 +54,15 @@ def call_phosus_api(image_path):
         
         if response.status_code == 200:
             return response.json()["prediction"], None
-        
+            
+        try:
+            error_data = response.json()
+            if error_data.get("error", {}).get("msg") == "Insufficient Credit":
+                print("Phosus API Credit Exhausted")
+                return "An interesting image", "API credit limit reached. Please try again later."
+        except:
+            pass
+            
         return "An interesting image", f"Error: Status {response.status_code}"
         
     except Exception as e:
