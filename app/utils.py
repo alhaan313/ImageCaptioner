@@ -1,20 +1,80 @@
 import requests
 import time
-from .config import token_key, cerebras_api_key
-import os
-from werkzeug.utils import secure_filename
+import base64
+from datetime import datetime, UTC, timedelta
+from jwt import encode
+from .config import token_key, cerebras_api_key, phosus_api_key, phosus_key_id
 from cerebras.cloud.sdk import Cerebras
+from werkzeug.utils import secure_filename
+import os
 
 UPLOAD_FOLDER = '/tmp/uploads'
 
-# Updated list of currently active models
-BLIP_MODELS = [
-    'Salesforce/blip-image-captioning-large',
-    'Salesforce/blip2-flan-t5-xl',
-    'moondream/moondream-v1.5'
-]
+_cached_token = None
+_token_expiry = None
 
-_last_successful_model = None
+def get_phosus_token():
+    """Generate JWT token for Phosus API with caching"""
+    global _cached_token, _token_expiry
+    
+    current_time = datetime.now(UTC)
+    
+    if _cached_token and _token_expiry and _token_expiry > current_time + timedelta(minutes=5):
+        return _cached_token
+    
+    expiry_time = current_time + timedelta(days=1)
+    payload = {
+        'account_key_id': phosus_key_id,
+        'exp': expiry_time,
+        'iat': current_time
+    }
+    
+    _cached_token = encode(payload, key=phosus_api_key, algorithm='HS256')
+    _token_expiry = expiry_time
+    return _cached_token
+
+def call_phosus_api(image_path):
+    """Get caption from Phosus API"""
+    try:
+        jwt_token = get_phosus_token()
+        headers = {"authorizationToken": jwt_token}
+        
+        with open(image_path, "rb") as f:
+            base64_img_str = base64.b64encode(f.read()).decode('utf-8')
+        
+        payload = {"image_b64": base64_img_str}
+        
+        response = requests.post(
+            "https://api.phosus.com/icaption/v1",
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            return response.json()["prediction"], None
+        
+        return "An interesting image", f"Error: Status {response.status_code}"
+        
+    except Exception as e:
+        print(f"Phosus API Error: {str(e)}")
+        return "An interesting image", str(e)
+
+def check_huggingface_status(timeout=10):
+    """Check if Phosus API is operational"""
+    try:
+        jwt_token = get_phosus_token()
+        headers = {"authorizationToken": jwt_token}
+        
+        # Simple test request to Phosus API
+        response = requests.get(
+            "https://api.phosus.com/status",  # Assuming there's a status endpoint
+            headers=headers,
+            timeout=timeout
+        )
+        return response.status_code == 200
+    except Exception:
+        return False
 
 def process_image(file):
     """Process the uploaded image: save it and return its path."""
@@ -25,83 +85,6 @@ def process_image(file):
     file_path = os.path.join(UPLOAD_FOLDER, filename)
     file.save(file_path)
     return file_path, filename
-
-def check_huggingface_status(timeout=10):
-    """Check if HuggingFace Inference API is operational"""
-    try:
-        # Try a small test request to a reliable model
-        response = requests.get(
-            "https://api-inference.huggingface.co/status", 
-            headers={'Authorization': f'Bearer {token_key}'},
-            timeout=timeout
-        )
-        return response.status_code == 200
-    except Exception:
-        return False
-
-def call_blip_api(image_path, max_retries=2, retry_delay=2):
-    """Send image to BLIP inference api with retries and wait for model loading"""
-    if not check_huggingface_status():
-        return "Unable to process image at this time", "HuggingFace Inference API is currently unavailable. Please try again later."
-    
-    global _last_successful_model
-    
-    if _last_successful_model:
-        models_to_try = [_last_successful_model] + [m for m in BLIP_MODELS if m != _last_successful_model]
-    else:
-        models_to_try = BLIP_MODELS
-
-    last_error = None
-    for model in models_to_try:
-        for attempt in range(max_retries):
-            try:
-                print(f"Trying BLIP model: {model} (attempt {attempt + 1})")
-                api_url = f'https://api-inference.huggingface.co/models/{model}'
-                headers = {
-                    'Authorization': f'Bearer {token_key}',
-                    'Content-Type': 'application/json'
-                }
-                
-                # Convert image to base64
-                import base64
-                with open(image_path, "rb") as f:
-                    image_bytes = base64.b64encode(f.read()).decode('utf-8')
-                
-                # Send as JSON with base64 encoded image
-                payload = {
-                    "inputs": f"data:image/jpeg;base64,{image_bytes}"
-                }
-                
-                response = requests.post(api_url, headers=headers, json=payload, timeout=30)
-                print(f"Response from {model}: Status {response.status_code}")
-                print(f"Response content: {response.text[:200]}")  # Print first 200 chars of response
-                
-                if response.status_code == 200:
-                    data = response.json()
-                    if isinstance(data, list) and data:
-                        _last_successful_model = model
-                        return data[0], None  # Some models return direct string
-                    elif isinstance(data, dict):
-                        result = data.get("generated_text", data.get("caption", str(data)))
-                        _last_successful_model = model
-                        return result, None
-                
-                if response.status_code != 404:
-                    time.sleep(retry_delay)
-                    continue
-                
-                last_error = f"Status {response.status_code} from {model}"
-                break
-                
-            except Exception as e:
-                print(f"Error with {model}: {str(e)}")
-                last_error = str(e)
-                if attempt < max_retries - 1:
-                    time.sleep(retry_delay)
-                continue
-    
-    print(f"All BLIP models failed. Last error: {last_error}")
-    return "An interesting image", f"Image processing service temporarily unavailable. Last error: {last_error}"
 
 def get_emotion_prompt(emotion):
     prompts = {
@@ -122,11 +105,15 @@ def generate_cerebras_captions(image_path, emotion, base_caption):
         messages = [
             {
                 "role": "system",
-                "content": f"You are a creative caption generator. {get_emotion_prompt(emotion)}"
+                "content": (
+                    f"You are a creative caption generator. {get_emotion_prompt(emotion)} "
+                    "Format each caption on a new line starting with a number and a period. "
+                    "Keep responses clean and concise without additional formatting or quotes."
+                )
             },
             {
                 "role": "user",
-                "content": f"Based on this image description: '{base_caption}', generate 5 unique and creative captions, numbered 1-5."
+                "content": f"Based on this image description: '{base_caption}', generate 5 unique captions."
             }
         ]
         
@@ -135,20 +122,24 @@ def generate_cerebras_captions(image_path, emotion, base_caption):
             model="llama3.1-8b",
             stream=True,
             max_completion_tokens=1024,
-            temperature=0.7,
-            top_p=1
+            temperature=0.8
         )
 
-        # Collect the response
         full_response = ""
         for chunk in stream:
             full_response += (chunk.choices[0].delta.content or "")
         
-        captions = [cap.strip() for cap in full_response.split("\n") 
-                    if cap.strip() and any(cap.startswith(str(i)) for i in range(1,6))]
+        # Clean up the response
+        captions = []
+        for line in full_response.split('\n'):
+            line = line.strip()
+            if line and any(line.startswith(f"{i}.") for i in range(1, 6)):
+                caption = line[line.find('.')+1:].strip()
+                caption = caption.strip('"').strip("'")  # Remove quotes if present
+                captions.append(caption)
         
         return captions[:5], None
         
     except Exception as e:
-        error_message = "Our AI enhancement service is temporarily unavailable. We've provided a base caption for your image."
+        error_message = f"Creative caption generation failed: {str(e)}"
         return [], error_message

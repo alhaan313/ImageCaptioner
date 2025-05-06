@@ -59,13 +59,17 @@
 
                         <div class="action-panel">
                             <div class="share-options">
-                                <button class="share-btn twitter">
+                                <button class="share-btn twitter" aria-label="Share on Twitter">
                                     <i class="fab fa-twitter"></i>
-                                    Twitter
+                                    <span>Twitter</span>
                                 </button>
-                                <button class="share-btn linkedin">
-                                    <i class="fab fa-linkedin-in"></i>
-                                    LinkedIn
+                                <button class="share-btn facebook" aria-label="Share on Facebook">
+                                    <i class="fab fa-facebook-f"></i>
+                                    <span>Facebook</span>
+                                </button>
+                                <button class="share-btn instagram" aria-label="Share on Instagram">
+                                    <i class="fab fa-instagram"></i>
+                                    <span>Instagram</span>
                                 </button>
                             </div>
                             <a href="{{ url_for('main.index') }}" class="try-again-btn">
@@ -98,16 +102,27 @@
         // Share functionality
         document.querySelectorAll('.share-btn').forEach(btn => {
             btn.addEventListener('click', function() {
-                const caption = document.querySelector('.main-caption p').textContent;
-                const text = encodeURIComponent(`Check out this AI-generated caption: ${caption}`);
+                const baseCaption = document.querySelector('.main-caption p').textContent;
+                const imageUrl = document.querySelector('.showcase-image').src;
+                const text = encodeURIComponent(`${baseCaption}`);
                 const platform = this.classList[1];
                 
                 const urls = {
-                    twitter: `https://twitter.com/intent/tweet?text=${text}`,
-                    linkedin: `https://www.linkedin.com/shareArticle?mini=true&url=${window.location.href}&title=AI%20Generated%20Caption&summary=${text}`
+                    twitter: `https://twitter.com/intent/tweet?text=${text}&url=${imageUrl}`,
+                    facebook: `https://www.facebook.com/sharer/sharer.php?u=${imageUrl}&quote=${text}`,
+                    instagram: `https://instagram.com/share?text=${text}&url=${imageUrl}`
                 };
 
-                window.open(urls[platform], '_blank');
+                const width = 550;
+                const height = 400;
+                const left = (window.innerWidth - width) / 2;
+                const top = (window.innerHeight - height) / 2;
+
+                window.open(
+                    urls[platform], 
+                    'share', 
+                    `width=${width},height=${height},left=${left},top=${top},toolbar=0,status=0`
+                );
             });
         });
     </script>

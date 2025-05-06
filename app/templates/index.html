@@ -15,6 +15,7 @@
             <span class="navbar-brand">AI Caption Studio</span>
             <div class="nav-links">
                 <a href="#about" class="nav-link">About</a>
+                <a href="{{ url_for('main.timeline') }}" class="nav-link">Timeline</a>
                 <a href="https://alhaan313.github.io/my-portfolio/" class="nav-link">Portfolio</a>
                 <a href="#contact" class="nav-link">Contact</a>
             </div>
@@ -22,8 +23,8 @@
     </nav>
 
     <div id="api-status-banner" class="api-status-warning" style="display: none;">
-        <i class="fas fa-exclamation-triangle"></i>
-        <span>HuggingFace Inference API is currently experiencing issues. Image processing may be limited or unavailable.</span>
+        <i class="fas fa-info-circle"></i>
+        <span>Currently using Phosus API for enhanced image captioning. Service status: operational</span>
     </div>
 
     <header class="hero-section">
@@ -89,8 +90,8 @@
             <div class="tech-cards">
                 <div class="tech-card">
                     <i class="fas fa-brain"></i>
-                    <h3>BLIP Vision Model</h3>
-                    <p>Powered by Salesforce's BLIP (Bootstrapping Language-Image Pre-training) for accurate image understanding and base caption generation</p>
+                    <h3>Phosus Vision API</h3>
+                    <p>Powered by Phosus's advanced image captioning API for accurate and contextual base caption generation</p>
                 </div>
                 <div class="tech-card">
                     <i class="fas fa-robot"></i>
@@ -100,7 +101,7 @@
                 <div class="tech-card">
                     <i class="fas fa-magic"></i>
                     <h3>Hybrid Processing</h3>
-                    <p>Combines vision AI and language models for comprehensive image analysis and natural language generation</p>
+                    <p>Combines Phosus Vision AI and Cerebras language models for comprehensive image analysis and natural language generation</p>
                 </div>
             </div>
             <div class="tech-info">

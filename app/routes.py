@@ -2,7 +2,8 @@ from flask import Blueprint, render_template, request, jsonify, url_for, redirec
 import requests
 import os
 from werkzeug.utils import secure_filename
-from .utils import call_blip_api, process_image, generate_cerebras_captions
+from .utils import call_phosus_api, process_image, generate_cerebras_captions
+from datetime import datetime
 
 main = Blueprint('main', __name__)
 
@@ -38,17 +39,16 @@ def generate_caption():
         
         print(f"Processing image: {filename}")
         
-        # Get base caption from BLIP
-        base_caption, error = call_blip_api(file_path)
+        # Get base caption from Phosus
+        base_caption, error = call_phosus_api(file_path)
         print(f"Base caption: {base_caption}")
-        print(f"BLIP error: {error}")
+        print(f"Phosus error: {error}")
         
-        # Always proceed with Cerebras, using whatever caption we got
+        # Generate creative variations using Cerebras
         captions, cerebras_error = generate_cerebras_captions(file_path, tone, base_caption)
         
         image_url = url_for('main.uploaded_file', filename=filename)
 
-        # Don't redirect on error, just show the results with whatever we got
         return render_template('result.html', 
                              base_caption=base_caption or "Image processing incomplete",
                              captions=captions,
@@ -71,7 +71,7 @@ def generate_caption_api():
 
         file = request.files['image']
         file_path = process_image(file)
-        caption = call_blip_api(file_path)
+        caption = call_phosus_api(file_path)
 
         return jsonify({'caption': caption})
     except ValueError as e:
@@ -83,4 +83,14 @@ def generate_caption_api():
 @main.route('/api/status')
 def api_status():
     from .utils import check_huggingface_status
-    return jsonify({'operational': check_huggingface_status()})
+    status = check_huggingface_status()
+    return jsonify({
+        'operational': status,
+        'service': 'Phosus API',
+        'timestamp': datetime.utcnow().isoformat()
+    })
+
+
+@main.route('/timeline')
+def timeline():
+    return render_template('timeline.html')
