@@ -36,27 +36,29 @@ def generate_caption():
         tone = request.form.get('tone', 'professional')
         file_path, filename = process_image(file)
         
-        # Get base caption from BLIP
-        base_caption = call_blip_api(file_path)
+        print(f"Processing image: {filename}")
         
-        # Generate additional captions using Cerebras
-        captions, error_message = generate_cerebras_captions(file_path, tone, base_caption)
+        # Get base caption from BLIP
+        base_caption, error = call_blip_api(file_path)
+        print(f"Base caption: {base_caption}")
+        print(f"BLIP error: {error}")
+        
+        # Always proceed with Cerebras, using whatever caption we got
+        captions, cerebras_error = generate_cerebras_captions(file_path, tone, base_caption)
         
         image_url = url_for('main.uploaded_file', filename=filename)
 
+        # Don't redirect on error, just show the results with whatever we got
         return render_template('result.html', 
-                             base_caption=base_caption,
+                             base_caption=base_caption or "Image processing incomplete",
                              captions=captions,
-                             error_message=error_message,
+                             error_message=error or cerebras_error,
                              image_url=image_url,
                              tone=tone)
     
-    except ValueError as e:
-        flash(str(e), 'error')
-        return redirect(url_for('main.index'))
-    
     except Exception as e:
-        flash(f"Error: {e}", 'error')
+        print(f"Critical Error in generate_caption: {str(e)}")
+        flash("Unable to process image. Please try again.", 'error')
         return redirect(url_for('main.index'))
 
 
@@ -76,3 +78,9 @@ def generate_caption_api():
         return jsonify({'error': str(e)}), 400
     except Exception as e:
         return jsonify({'error': f"Error: {e}"}), 500
+
+
+@main.route('/api/status')
+def api_status():
+    from .utils import check_huggingface_status
+    return jsonify({'operational': check_huggingface_status()})

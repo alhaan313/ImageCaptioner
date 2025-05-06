@@ -21,6 +21,11 @@
         </div>
     </nav>
 
+    <div id="api-status-banner" class="api-status-warning" style="display: none;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>HuggingFace Inference API is currently experiencing issues. Image processing may be limited or unavailable.</span>
+    </div>
+
     <header class="hero-section">
         <div class="container">
             <h1>Transform Your Images with AI</h1>
@@ -166,6 +171,20 @@
                 document.getElementById('selectedTone').value = e.target.value;
             });
         });
+
+        // Check API status
+        function checkApiStatus() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    const banner = document.getElementById('api-status-banner');
+                    banner.style.display = data.operational ? 'none' : 'flex';
+                });
+        }
+        
+        // Check status on page load and every 5 minutes
+        checkApiStatus();
+        setInterval(checkApiStatus, 300000);
     </script>
 </body>
 </html>

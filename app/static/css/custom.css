@@ -430,3 +430,19 @@ footer {
     color: var(--accent-color);
     margin: 1rem 0;
 }
+
+.api-status-warning {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 1rem;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid #ffeeba;
+}
+
+.api-status-warning i {
+    color: #856404;
+}

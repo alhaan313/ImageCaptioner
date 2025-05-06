@@ -1,0 +1,24 @@
+HuggingFace Inference API Status Notes
+====================================
+
+Current Status: DOWN (As of April 2024)
+Issue: HuggingFace Inference API is experiencing widespread issues affecting model inference.
+
+Monitoring Setup:
+- Automated status checks every 5 minutes via frontend
+- Backend verification before each API call
+- Warning banner displays when service is down
+
+Recovery Steps:
+1. API will automatically resume when HuggingFace services are restored
+2. No manual intervention needed
+3. Warning banner will automatically hide when service is back online
+
+Alternative Options During Downtime:
+1. Consider implementing local model inference
+2. Look into HuggingFace Inference Endpoints (paid service)
+3. Explore alternative API providers
+
+References:
+- HuggingFace Status Page: https://status.huggingface.co/
+- Official Issue Thread: https://discuss.huggingface.co/t/inference-api-stopped-working/
